@@ -1,0 +1,66 @@
+.root {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-background-color: #f5f5f5;
+}
+
+.mainContainer {
+    -fx-padding: 20px;
+}
+
+.label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #333333;
+    -fx-font-weight: bold;
+    -fx-padding: 5px;
+}
+
+.button {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 16px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 1);
+    -fx-border-color: transparent;
+}
+
+.button:hover {
+    -fx-background-color: #45a049;
+}
+
+.button:pressed {
+    -fx-background-color: #388e3c;
+}
+
+.choice-box {
+    -fx-background-color: #f0f0f0;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 12px;
+    -fx-text-fill: #333333;
+    -fx-min-width: 65px;
+}
+
+.choice-box:hover {
+    -fx-background-color: #e6e6e6;
+    -fx-cursor: hand;
+}
+
+.choice-box .arrow {
+    -fx-background-color: #666666;
+}
+
+.choice-box .context-menu {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 4px;
+    -fx-min-width: 65px;
+}
+
+.choice-box .menu-item:focused {
+    -fx-background-color: #cce5ff;
+    -fx-text-fill: #000000;
+}

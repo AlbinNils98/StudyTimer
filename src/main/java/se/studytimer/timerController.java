@@ -2,22 +2,29 @@ package se.studytimer;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
+import java.awt.*;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
 
 public class timerController {
 
 
   @FXML
   private Label header;
+  @FXML
+  private ChoiceBox<Integer> breakTimeChoice;
   @FXML
   private ChoiceBox<Integer> frequencyChoice;
   @FXML
@@ -32,56 +39,83 @@ public class timerController {
   private Timeline timeline;
   private LocalTime lastAlertTime;
   private LocalDateTime endDateTime;
+  private boolean isOnBreak = false;
+  private java.time.Duration breakDuration;
 
   @FXML
   private void initialize() {
+    header.setVisible(false);
     cancelBtn.setVisible(false);
-    frequencyChoice.setItems(FXCollections.observableArrayList(1, 30, 60, 120));
+
+    ObservableList<Integer> breakTimes = FXCollections.observableArrayList();
+
+    for (int i = 5; i <= 60; i += 5) {
+      breakTimes.add(i);
+    }
+
+    breakTimeChoice.setItems(FXCollections.observableArrayList(breakTimes));
+    breakTimeChoice.getSelectionModel().selectFirst();
+
+    ObservableList<Integer> frequencyTimes = FXCollections.observableArrayList();
+
+    for (int i = 30; i <= 240; i += 30) {
+      frequencyTimes.add(i);
+    }
+
+    frequencyChoice.setItems(FXCollections.observableArrayList(frequencyTimes));
     frequencyChoice.getSelectionModel().selectFirst();
 
     endTimeChoice.setItems(getFutureHours());
     endTimeChoice.getSelectionModel().selectFirst();
 
-    startBtn.setText("Start timer");
     startBtn.setOnAction(event -> startTimer());
   }
 
   public void startTimer(){
+    if (timeline != null) {
+      timeline.stop();
+    }
+
     Integer frequency = frequencyChoice.getValue();
     LocalTime endTime = endTimeChoice.getValue();
+    Integer breakMinutes = breakTimeChoice.getValue();
+    breakDuration = java.time.Duration.ofMinutes(breakMinutes);
 
-    header.setText("The timer is active. You will be alerted every " + frequency + " minutes");
-    timerOptions.setVisible(false);
-    cancelBtn.setVisible(true);
+    timerOptionsVisability(false, frequency);
 
 
     lastAlertTime = LocalTime.now();
 
     LocalTime now = LocalTime.now();
+
     if (endTime.isBefore(now)){
       endDateTime = LocalDateTime.now().plusDays(1).with(endTime);
     }else {
       endDateTime = LocalDateTime.now().with(endTime);
     }
 
-    timeline = new Timeline(new KeyFrame(Duration.seconds(1), eventAction -> {
-      cancelBtn.setOnAction(event -> {
+    cancelBtn.setOnAction(event -> {
+      if (timeline != null) {
         timeline.stop();
-        header.setText("Study Timer");
-        timerOptions.setVisible(true);
-        cancelBtn.setVisible(false);
-      });
+      }
+      timerOptionsVisability(true, frequency);
+    });
+
+    timeline = new Timeline(new KeyFrame(Duration.seconds(1), eventAction -> {
       if (LocalDateTime.now().isAfter(endDateTime)) {
         timeline.stop();
-        header.setText("Study Timer");
-        timerOptions.setVisible(true);
-        cancelBtn.setVisible(false);
+       timerOptionsVisability(true, frequency);
         return;
       }
 
-      if (LocalTime.now().isAfter(lastAlertTime.plusMinutes(frequency))) {
-        alertWindow();
+      if (!isOnBreak && LocalTime.now().isAfter(lastAlertTime.plusMinutes(frequency))) {
+        alertWindow("Time for a break!");
         lastAlertTime = LocalTime.now();
+        isOnBreak = true;
+      } else if (isOnBreak && LocalTime.now().isAfter(lastAlertTime.plus(breakDuration))) {
+        alertWindow("Back to studying!");
+        lastAlertTime = LocalTime.now();
+        isOnBreak = false;
       }
     }));
 
@@ -90,13 +124,28 @@ public class timerController {
 
   }
 
-  private void alertWindow(){
-    var alert = new Alert(Alert.AlertType.INFORMATION);
-    alert.setTitle("Timer");
-    alert.setHeaderText(null);
-    alert.setContentText("Time for a break!");
+  private void alertWindow(String message) {
+    Platform.runLater(() -> {
+      Alert alert = new Alert(Alert.AlertType.INFORMATION);
+      alert.setTitle("Timer");
+      alert.setHeaderText(null);
+      alert.setContentText(message);
 
-    alert.show();
+      // Get the current window from any control, e.g. your root or any node:
+      javafx.stage.Window owner = startBtn.getScene().getWindow();
+      alert.initOwner(owner);  // Set owner window to keep alert in front
+
+      Toolkit.getDefaultToolkit().beep();
+      alert.showAndWait();
+    });
+  }
+
+  private void timerOptionsVisability(boolean bool, int frequency){
+    header.setVisible(!bool);
+    header.setText("The timer is active. You will be alerted every " + frequency + " minutes.");
+    timerOptions.setVisible(bool);
+    startBtn.setVisible(bool);
+    cancelBtn.setVisible(!bool);
   }
 
   private ObservableList<LocalTime> getFutureHours(){
